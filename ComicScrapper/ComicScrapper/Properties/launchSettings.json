@@ -1,0 +1,10 @@
+{
+  "profiles": {
+    "ComicScrapper": {
+      "commandName": "Project"
+    },
+    "Container (Dockerfile)": {
+      "commandName": "Docker"
+    }
+  }
+}
