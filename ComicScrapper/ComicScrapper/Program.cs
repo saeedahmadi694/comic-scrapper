@@ -1,5 +1,6 @@
 ﻿using OpenQA.Selenium;
 using OpenQA.Selenium.Chrome;
+using OpenQA.Selenium.DevTools.V140.CacheStorage;
 using OpenQA.Selenium.Support.UI;
 using System.Globalization;
 using System.Text;
@@ -8,21 +9,25 @@ using System.Text.RegularExpressions;
 using WebDriverManager;
 using WebDriverManager.DriverConfigs.Impl;
 
-class ChapterInfo
+public class Catalog
 {
     public string Title { get; set; } = "";
     public string Url { get; set; } = "";
-    public string? Lang { get; set; }
-    public string? Group { get; set; }
-    public string? Volume { get; set; }
-    public string? Chapter { get; set; }
+    public string Description { get; set; } = "";
+    public string BannerImageAddress { get; set; }
+    public string CoverImageAddress { get; set; }
+    public List<string> Categories { get; set; }
+    public DateTime? PublishDate { get; set; }
+    public string Status { get; set; }
+    public Dictionary<string, string> Authors { get; set; }
+    public List<string> Titles { get; set; }
 }
 
 class Program
 {
     // <<<<<<<<<<<<<<<< EDIT THIS URL IF YOU NEED >>>>>>>>>>>>>>>>
     private const string TargetUrl =
-        "https://mangadex.org/title/2a55e420-b5c6-47cb-b189-fb9a1a7d6ab5/335km";
+        "https://mangadex.org/title/4809bb6c-1af2-41c5-9291-983027602d7f/shy";
 
     static void Main()
     {
@@ -44,42 +49,18 @@ class Program
         try
         {
             driver.Navigate().GoToUrl(TargetUrl);
-
+            var catalog = new Catalog();
+            catalog.Url = TargetUrl;
             // Handle cookie banner if present (MangaDex uses a consent modal sometimes)
             TryAcceptCookies(driver, wait);
 
-            //var bannerAndImage = ExtractBannerAndCover(driver);
-            //var categories = ExtractCategories(driver);
-            //var descriptionAndTitle = ExtractDescriptionAndTitle(driver);
-            //var description = ExtractPublishAndStatus(driver);
-            //var titles = ExtractTitles(driver);
-            var authors = ExtractAuthors(driver);
+            ExtractBannerAndCover(driver, catalog);
+            ExtractCategories(driver, catalog);
+            ExtractDescriptionAndTitle(driver, catalog);
+            ExtractPublishAndStatus(driver, catalog);
+            ExtractTitles(driver, catalog);
+            ExtractAuthors(driver, catalog);
             //var chapters = ExtractChapters(driver);
-
-            // Click the "Chapters" tab if the page shows tabs
-            //TryOpenChaptersTab(driver, wait);
-
-            // Ensure chapters container is visible
-            //wait.Until(d =>
-            //{
-            //    return d.FindElements(By.XPath("//a[contains(@href, '/chapter/')]")).Count > 0
-            //           || d.PageSource.Contains("/chapter/");
-            //});
-
-            // Scroll to trigger lazy loading until it stops adding new /chapter/ links
-            //ScrollToLoadAll(driver);
-
-            // Extract chapter rows
-            //var chapters = ExtractChapters(driver);
-
-            //Console.WriteLine($"Found {chapters.Count} chapters.");
-
-            // Save to files
-            //File.WriteAllText("chapters.json",
-            //    JsonSerializer.Serialize(chapters, new JsonSerializerOptions { WriteIndented = true }),
-            //    Encoding.UTF8);
-
-            //WriteCsv("chapters.csv", chapters);
 
             Console.WriteLine("Saved: chapters.json, chapters.csv");
         }
@@ -89,12 +70,10 @@ class Program
         }
     }
 
-    private static object ExtractAuthors(ChromeDriver driver)
+    private static void ExtractAuthors(ChromeDriver driver, Catalog catalog)
     {
-        var result = new Dictionary<string, List<string>>();
+        var result = new Dictionary<string, string>();
 
-        // Each info section looks like:
-        // <div class="mb-2"><div class="font-bold mb-2">Author</div><div>...</div></div>
         var infoBlocks = driver.FindElements(By.CssSelector("div.mb-2"));
 
         foreach (var block in infoBlocks)
@@ -119,25 +98,20 @@ class Program
 
                 if (values.Count == 0) continue;
 
-                if (result.ContainsKey(key))
-                    result[key].AddRange(values);
-                else
-                    result[key] = values;
+                //if (result.ContainsKey(key))
+                //    result[key].AddRange(values);
+                //else
+                //    result[key] = values;
             }
             catch
             {
                 // Ignore parsing errors for malformed sections
             }
         }
-
-        // Deduplicate final lists
-        foreach (var k in result.Keys.ToList())
-            result[k] = result[k].Distinct().ToList();
-
-        return result;
+        catalog.Authors = result;
     }
 
-    private static object ExtractTitles(ChromeDriver driver)
+    private static void ExtractTitles(ChromeDriver driver, Catalog catalog)
     {
         var results = new List<AltTitle>();
 
@@ -187,16 +161,10 @@ class Program
             }
         }
 
-        // Optional: de-duplicate by text+language
-        results = results
-            .GroupBy(t => (t.Text, t.Language ?? "", t.Script ?? ""))
-            .Select(g => g.First())
-            .ToList();
 
-        return results;
     }
 
-    private static object ExtractPublishAndStatus(ChromeDriver driver)
+    private static void ExtractPublishAndStatus(ChromeDriver driver, Catalog catalog)
     {
         try
         {
@@ -205,7 +173,7 @@ class Program
                              .FirstOrDefault(e => e.Text.Contains("Publication:", StringComparison.OrdinalIgnoreCase));
 
             if (span == null)
-                return null;
+                return;
 
             // Example text: "Publication: 2025, Ongoing"
             var text = span.Text.Trim();
@@ -237,22 +205,22 @@ class Program
             {
                 status = parts[1];
             }
-
-            return (publishDate, status);
+            catalog.PublishDate = publishDate ?? DateTime.MinValue;
+            catalog.Status = status ?? "";
         }
         catch
         {
-            return null;
+            return;
         }
     }
 
-    private static object ExtractDescriptionAndTitle(ChromeDriver driver)
+    private static void ExtractDescriptionAndTitle(ChromeDriver driver, Catalog catalog)
     {
 
         // The title text is inside <div class="title"><p>...</p></div>
         var titleElement = driver.FindElement(By.CssSelector(".title p"));
         var title = titleElement.Text?.Trim();
-        //return string.IsNullOrWhiteSpace(title) ? null : title;
+        catalog.Title = title ?? "";
 
         IWebElement? container = null;
 
@@ -267,7 +235,7 @@ class Program
             container = alt.FirstOrDefault();
         }
 
-        if (container == null) return null;
+        if (container == null) return;
 
         // Collect paragraph texts
         var paragraphs = container.FindElements(By.CssSelector("p"))
@@ -280,17 +248,17 @@ class Program
             ? string.Join("\n\n", paragraphs)
             : container.Text?.Trim() ?? string.Empty;
 
-        if (string.IsNullOrWhiteSpace(raw)) return null;
+        if (string.IsNullOrWhiteSpace(raw)) return;
 
         // Normalize whitespace
         raw = Regex.Replace(raw, @"[ \t]+", " ");      // collapse spaces
         raw = Regex.Replace(raw, @"\n{3,}", "\n\n");   // limit blank lines
 
-        return raw.Trim();
+        catalog.Description = raw.Trim();
 
     }
 
-    private static object ExtractCategories(ChromeDriver driver)
+    private static void ExtractCategories(ChromeDriver driver, Catalog catalog)
     {
         var categories = new List<string>();
 
@@ -308,43 +276,36 @@ class Program
             }
         }
 
-        return categories;
+        catalog.Categories = categories;
     }
-    private static object ExtractBannerAndCover(ChromeDriver driver)
+    private static void ExtractBannerAndCover(ChromeDriver driver, Catalog catalog)
     {
         var urls = new List<string>();
 
         // 1. Extract <a href=".../covers/...jpg">
-        var coverElements = driver.FindElements(By.CssSelector("a[href*='/covers/']"));
-        foreach (var elem in coverElements)
+        var coverElement = driver.FindElements(By.CssSelector("a[href*='/covers/']")).FirstOrDefault();
+        var href = coverElement?.GetAttribute("href");
+        if (!string.IsNullOrWhiteSpace(href))
         {
-            var href = elem.GetAttribute("href");
-            if (!string.IsNullOrWhiteSpace(href))
-            {
-                href = href.Replace(".512.jpg", ".jpg").Replace(".256.jpg", ".jpg");
-                urls.Add(href);
-            }
+            href = href.Replace(".512.jpg", ".jpg").Replace(".256.jpg", ".jpg");
+            catalog.CoverImageAddress = href;
         }
+
 
         // 2. Extract background-image URLs from inline styles
-        var bannerElements = driver.FindElements(By.CssSelector(".banner-image[style*='background-image']"));
-        foreach (var elem in bannerElements)
+        var bannerElement = driver.FindElements(By.CssSelector(".banner-image[style*='background-image']")).FirstOrDefault();
+        var style = bannerElement?.GetAttribute("style");
+        if (!string.IsNullOrWhiteSpace(style))
         {
-            var style = elem.GetAttribute("style");
-            if (!string.IsNullOrWhiteSpace(style))
+            var match = Regex.Match(style, @"url\(['""]?(?<url>https.*?\.jpg(?:\.\d+)?)[^'""]*['""]?\)");
+            if (match.Success)
             {
-                var match = Regex.Match(style, @"url\(['""]?(?<url>https.*?\.jpg(?:\.\d+)?)[^'""]*['""]?\)");
-                if (match.Success)
-                {
-                    var bgUrl = match.Groups["url"].Value
-                        .Replace(".512.jpg", ".jpg")
-                        .Replace(".256.jpg", ".jpg");
-                    urls.Add(bgUrl);
-                }
+                var bgUrl = match.Groups["url"].Value
+                    .Replace(".512.jpg", ".jpg")
+                    .Replace(".256.jpg", ".jpg");
+                catalog.BannerImageAddress = bgUrl;
             }
         }
-
-        return urls;
     }
     static void TryAcceptCookies(IWebDriver driver, WebDriverWait wait)
     {
@@ -372,4 +333,18 @@ class Program
         catch { /* ignore */ }
     }
 
+}
+
+public class AltTitle
+{
+    public string Text;
+    public string? Language;
+    public string? Script;
+
+    public AltTitle(string text, string? language, string? script)
+    {
+        this.Text = text;
+        this.Language = language;
+        this.Script = script;
+    }
 }
