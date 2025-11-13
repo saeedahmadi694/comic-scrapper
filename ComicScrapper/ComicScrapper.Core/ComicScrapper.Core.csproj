@@ -1,0 +1,35 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+	  <TargetFramework>netstandard2.1</TargetFramework>
+	  <Nullable>enable</Nullable>
+	  <Title>ComicScrapper.Core</Title>
+	  <Version>1.0.0</Version>
+	  <Authors>saeed ahmadi</Authors>
+	  <Company>saeed ahmadi</Company>
+	  <PackageId>ComicScrapper.Core</PackageId>
+	  <Product>ComicScrapper.Core</Product>
+	  <Description>captcha service</Description>
+	  <RepositoryUrl>https://github.com/saeedahmadi694/comic-scrapper</RepositoryUrl>
+	  <PackageReadmeFile>README.md</PackageReadmeFile>
+	  <PackageLicenseFile>LICENSE</PackageLicenseFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="..\..\LICENSE">
+      <Pack>True</Pack>
+      <PackagePath>\</PackagePath>
+    </None>
+    <None Include="..\..\README.md">
+      <Pack>True</Pack>
+      <PackagePath>\</PackagePath>
+    </None>
+  </ItemGroup>
+
+
+	<ItemGroup>
+		<PackageReference Include="Microsoft.Extensions.Http" Version="10.0.0" />
+		<PackageReference Include="Newtonsoft.Json" Version="13.0.4" />
+	</ItemGroup>
+	
+</Project>

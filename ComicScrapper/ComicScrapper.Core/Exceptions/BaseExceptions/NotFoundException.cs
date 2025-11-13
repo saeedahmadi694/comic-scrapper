@@ -1,4 +1,6 @@
-﻿namespace ComicScrapper.Exceptions.BaseExceptions
+﻿using System;
+
+namespace ComicScrapper.Core.Exceptions.BaseExceptions
 {
     public class NotFoundException : BaseException
     {

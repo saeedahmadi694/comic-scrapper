@@ -1,3 +1,4 @@
 <Solution>
-  <Project Path="ComicScrapper/ComicScrapper.csproj" />
+  <Project Path="ComicScrapper.Core/ComicScrapper.Core.csproj" Id="37341053-1753-4326-b6d0-d8788fcd9c86" />
+  <Project Path="ComicScrapper/ComicScrapper.Presenter.csproj" />
 </Solution>

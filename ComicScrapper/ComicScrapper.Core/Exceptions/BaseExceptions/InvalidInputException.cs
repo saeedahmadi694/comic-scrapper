@@ -1,6 +1,6 @@
 ﻿using System.Net;
 
-namespace ComicScrapper.Exceptions.BaseExceptions
+namespace ComicScrapper.Core.Exceptions.BaseExceptions
 {
     public class InvalidInputException : BaseException
     {
