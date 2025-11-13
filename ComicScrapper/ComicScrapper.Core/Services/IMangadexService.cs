@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace ComicScrapper.Core.Services
 {
-    public interface IArcaptchaService
+    public interface IMangadexService
     {
         Task<ComicData> GetComicDataAsync(string id, CancellationToken cancellationToken);
         Task<List<ChapterData>> GetComicChaptersAsync(string id, CancellationToken cancellationToken);

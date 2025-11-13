@@ -12,7 +12,7 @@ using System.Threading.Tasks;
 namespace ComicScrapper.Core.Services
 {
 
-    public class MangadexService : IArcaptchaService
+    public class MangadexService : IMangadexService
     {
         private readonly IHttpClientFactory _httpClientFactory;
         private readonly string _baseUrl = "https://api.mangadex.org";
